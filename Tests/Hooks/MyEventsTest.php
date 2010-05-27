@@ -35,7 +35,7 @@ require_once(t3lib_extMgm::extPath('oelib') . 'class.tx_oelib_Autoloader.php');
  */
 class tx_seminarspaypal_Hooks_MyEventsTest extends tx_phpunit_testcase {
 	/**
-	 * @var tx_seminarspaypal_Hoooks_MyEvents
+	 * @var tx_seminarspaypal_Hooks_MyEvents
 	 */
 	private $fixture;
 
@@ -48,6 +48,17 @@ class tx_seminarspaypal_Hooks_MyEventsTest extends tx_phpunit_testcase {
 		$this->testingFramework
 			= new tx_oelib_testingFramework('tx_seminarspaypal');
 		$this->fixture = new tx_seminarspaypal_Hooks_MyEvents();
+
+		$configuration = new tx_oelib_Configuration();
+		$configuration->setData(
+			array(
+				'currency' => 'EUR',
+				'email' => 'workshops@example.com',
+				'locale' => 'DE',
+			)
+		);
+		tx_oelib_ConfigurationRegistry::getInstance()
+			->set('plugin.seminarspaypal', $configuration);
 	}
 
 	public function tearDown() {
@@ -59,8 +70,273 @@ class tx_seminarspaypal_Hooks_MyEventsTest extends tx_phpunit_testcase {
 	/**
 	 * @test
 	 */
-	public function foo() {
+	public function modifyMyEventsListRowForPaidNonFreeRegistrationNotSetsTotalPriceMarker() {
+		$registration = $this->getMock(
+			'tx_seminars_Model_Registration',
+			array('isPaid', 'getTotalPrice', 'getUid', 'getSeats', 'getEvent')
+		);
+		$registration->expects($this->any())->method('isPaid')
+			->will($this->returnValue(TRUE));
+		$registration->expects($this->any())->method('getTotalPrice')
+			->will($this->returnValue(42.00));
 
+		$template = $this->getMock(
+			'tx_oelib_Template', array('setMarker')
+		);
+		$template->expects($this->never())->method('setMarker');
+
+		$this->fixture->modifyMyEventsListRow($registration, $template);
+	}
+
+	/**
+	 * @test
+	 */
+	public function modifyMyEventsListRowForUnpaidFreeRegistrationNotSetsTotalPriceMarker() {
+		$registration = $this->getMock(
+			'tx_seminars_Model_Registration',
+			array('isPaid', 'getTotalPrice', 'getUid', 'getSeats', 'getEvent')
+		);
+		$registration->expects($this->any())->method('isPaid')
+			->will($this->returnValue(FALSE));
+		$registration->expects($this->any())->method('getTotalPrice')
+			->will($this->returnValue(0.00));
+
+		$template = $this->getMock(
+			'tx_oelib_Template', array('setMarker')
+		);
+		$template->expects($this->never())->method('setMarker');
+
+		$this->fixture->modifyMyEventsListRow($registration, $template);
+	}
+
+	/**
+	 * @test
+	 */
+	public function modifyMyEventsListRowForUnpaidNonFreeRegistrationCopiesTotalPriceMarkerContent() {
+		$registration = $this->getMock(
+			'tx_seminars_Model_Registration',
+			array('isPaid', 'getTotalPrice', 'getUid', 'getSeats', 'getEvent')
+		);
+		$registration->expects($this->any())->method('isPaid')
+			->will($this->returnValue(FALSE));
+		$registration->expects($this->any())->method('getTotalPrice')
+			->will($this->returnValue(42.00));
+
+		$event = $this->getMock('tx_seminars_Model_Event');
+		$registration->expects($this->any())->method('getEvent')
+			->will($this->returnValue($event));
+
+		$template = $this->getMock('tx_oelib_Template', array('getMarker'));
+		$template->processTemplate(
+			'<!--###X###-->###TOTAL_PRICE###<!--###X###-->'
+		);
+		$template->expects($this->any())->method('getMarker')
+			->with('total_price')->will($this->returnValue('42.00 EUR'));
+
+		$this->fixture->modifyMyEventsListRow($registration, $template);
+
+		$this->assertContains(
+			'42.00 EUR',
+			$template->getSubpart('X')
+		);
+	}
+
+	/**
+	 * @test
+	 */
+	public function modifyMyEventsListRowForUnpaidNonFreeRegistrationSetsCurrencyFromConfiguration() {
+		$registration = $this->getMock(
+			'tx_seminars_Model_Registration',
+			array('isPaid', 'getTotalPrice', 'getUid', 'getSeats', 'getEvent')
+		);
+		$registration->expects($this->any())->method('isPaid')
+			->will($this->returnValue(FALSE));
+		$registration->expects($this->any())->method('getTotalPrice')
+			->will($this->returnValue(42.99));
+
+		$event = $this->getMock('tx_seminars_Model_Event');
+		$registration->expects($this->any())->method('getEvent')
+			->will($this->returnValue($event));
+
+		$template = $this->getMock('tx_oelib_Template', array('getMarker'));
+		$template->processTemplate(
+			'<!--###X###-->###TOTAL_PRICE###<!--###X###-->'
+		);
+		$template->expects($this->any())->method('getMarker')
+			->with('total_price')->will($this->returnValue('42.00 EUR'));
+
+		$this->fixture->modifyMyEventsListRow($registration, $template);
+
+		$this->assertContains(
+			'name="currency_code" value="EUR"',
+			$template->getSubpart('X')
+		);
+	}
+
+	/**
+	 * @test
+	 */
+	public function modifyMyEventsListRowForUnpaidNonFreeRegistrationSetsEmailFromConfiguration() {
+		$registration = $this->getMock(
+			'tx_seminars_Model_Registration',
+			array('isPaid', 'getTotalPrice', 'getUid', 'getSeats', 'getEvent')
+		);
+		$registration->expects($this->any())->method('isPaid')
+			->will($this->returnValue(FALSE));
+		$registration->expects($this->any())->method('getTotalPrice')
+			->will($this->returnValue(42.99));
+
+		$event = $this->getMock('tx_seminars_Model_Event');
+		$registration->expects($this->any())->method('getEvent')
+			->will($this->returnValue($event));
+
+		$template = $this->getMock('tx_oelib_Template', array('getMarker'));
+		$template->processTemplate(
+			'<!--###X###-->###TOTAL_PRICE###<!--###X###-->'
+		);
+		$template->expects($this->any())->method('getMarker')
+			->with('total_price')->will($this->returnValue('42.00 EUR'));
+
+		$this->fixture->modifyMyEventsListRow($registration, $template);
+
+		$this->assertContains(
+			'name="business" value="workshops@example.com"',
+			$template->getSubpart('X')
+		);
+	}
+
+	/**
+	 * @test
+	 */
+	public function modifyMyEventsListRowForUnpaidNonFreeRegistrationSetsLocaleFromConfiguration() {
+		$registration = $this->getMock(
+			'tx_seminars_Model_Registration',
+			array('isPaid', 'getTotalPrice', 'getUid', 'getSeats', 'getEvent')
+		);
+		$registration->expects($this->any())->method('isPaid')
+			->will($this->returnValue(FALSE));
+		$registration->expects($this->any())->method('getTotalPrice')
+			->will($this->returnValue(42.99));
+
+		$event = $this->getMock('tx_seminars_Model_Event');
+		$registration->expects($this->any())->method('getEvent')
+			->will($this->returnValue($event));
+
+		$template = $this->getMock('tx_oelib_Template', array('getMarker'));
+		$template->processTemplate(
+			'<!--###X###-->###TOTAL_PRICE###<!--###X###-->'
+		);
+		$template->expects($this->any())->method('getMarker')
+			->with('total_price')->will($this->returnValue('42.00 EUR'));
+
+		$this->fixture->modifyMyEventsListRow($registration, $template);
+
+		$this->assertContains(
+			'name="lc" value="DE"',
+			$template->getSubpart('X')
+		);
+	}
+
+	/**
+	 * @test
+	 */
+	public function modifyMyEventsListRowForUnpaidNonFreeRegistrationSetsUidFromRegistration() {
+		$registration = $this->getMock(
+			'tx_seminars_Model_Registration',
+			array('isPaid', 'getTotalPrice', 'getUid', 'getSeats', 'getEvent')
+		);
+		$registration->expects($this->any())->method('isPaid')
+			->will($this->returnValue(FALSE));
+		$registration->expects($this->any())->method('getTotalPrice')
+			->will($this->returnValue(42.99));
+		$registration->expects($this->any())->method('getUid')
+			->will($this->returnValue(1234));
+
+		$event = $this->getMock('tx_seminars_Model_Event');
+		$registration->expects($this->any())->method('getEvent')
+			->will($this->returnValue($event));
+
+		$template = $this->getMock('tx_oelib_Template', array('getMarker'));
+		$template->processTemplate(
+			'<!--###X###-->###TOTAL_PRICE###<!--###X###-->'
+		);
+		$template->expects($this->any())->method('getMarker')
+			->with('total_price')->will($this->returnValue('42.00 EUR'));
+
+		$this->fixture->modifyMyEventsListRow($registration, $template);
+
+		$this->assertContains(
+			'name="item_number" value="1234"',
+			$template->getSubpart('X')
+		);
+	}
+
+	/**
+	 * @test
+	 */
+	public function modifyMyEventsListRowForUnpaidNonFreeRegistrationSetsSeatsFromRegistration() {
+		$registration = $this->getMock(
+			'tx_seminars_Model_Registration',
+			array('isPaid', 'getTotalPrice', 'getUid', 'getSeats', 'getEvent')
+		);
+		$registration->expects($this->any())->method('isPaid')
+			->will($this->returnValue(FALSE));
+		$registration->expects($this->any())->method('getTotalPrice')
+			->will($this->returnValue(42.99));
+		$registration->expects($this->any())->method('getSeats')
+			->will($this->returnValue(4));
+
+		$event = $this->getMock('tx_seminars_Model_Event');
+		$registration->expects($this->any())->method('getEvent')
+			->will($this->returnValue($event));
+
+		$template = $this->getMock('tx_oelib_Template', array('getMarker'));
+		$template->processTemplate(
+			'<!--###X###-->###TOTAL_PRICE###<!--###X###-->'
+		);
+		$template->expects($this->any())->method('getMarker')
+			->with('total_price')->will($this->returnValue('42.00 EUR'));
+
+		$this->fixture->modifyMyEventsListRow($registration, $template);
+
+		$this->assertContains(
+			' (4)"',
+			$template->getSubpart('X')
+		);
+	}
+
+	/**
+	 * @test
+	 */
+	public function modifyMyEventsListRowForUnpaidNonFreeRegistrationSetsTitleFromEvent() {
+		$registration = $this->getMock(
+			'tx_seminars_Model_Registration',
+			array('isPaid', 'getTotalPrice', 'getUid', 'getSeats', 'getEvent')
+		);
+		$registration->expects($this->any())->method('isPaid')
+			->will($this->returnValue(FALSE));
+		$registration->expects($this->any())->method('getTotalPrice')
+			->will($this->returnValue(42.99));
+
+		$event = $this->getMock('tx_seminars_Model_Event', array('getTitle'));
+		$event->expects($this->any())->method('getTitle')
+			->will($this->returnValue('Scream & shout'));
+		$registration->expects($this->any())->method('getEvent')
+			->will($this->returnValue($event));
+
+		$template = $this->getMock('tx_oelib_Template', array('getMarker'));
+		$template->processTemplate(
+			'<!--###X###-->###TOTAL_PRICE###<!--###X###-->'
+		);
+		$template->expects($this->any())->method('getMarker')
+			->with('total_price')->will($this->returnValue('42.00 EUR'));
+
+		$this->fixture->modifyMyEventsListRow($registration, $template);
+
+		$this->assertContains(
+			'name="item_name" value="Scream &amp; shout (',
+			$template->getSubpart('X')
+		);
 	}
 }
 

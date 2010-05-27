@@ -1,2 +1,5 @@
 plugin.seminarspaypal {
+	currency = EUR
+	email =
+	locale = GB
 }

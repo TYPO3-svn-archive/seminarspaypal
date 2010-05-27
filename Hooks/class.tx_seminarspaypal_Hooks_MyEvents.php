@@ -48,6 +48,41 @@ class tx_seminarspaypal_Hooks_MyEvents {
 	public function modifyMyEventsListRow(
 		tx_seminars_Model_Registration $registration, tx_oelib_Template $template
 	) {
+		if ($registration->isPaid() || ($registration->getTotalPrice() == 0.00)) {
+			return;
+		}
+
+		$configuration = tx_oelib_ConfigurationRegistry::get('plugin.seminarspaypal');
+
+		$originalContent = $template->getMarker('total_price');
+
+		$newContent = $originalContent . '&nbsp;' .
+			'<form target="paypal" action="https://www.paypal.com/cgi-bin/webscr" method="post">' .
+			'<div style="display: inline;">' .
+			'<input type="hidden" name="cmd" value="_cart" />' .
+			'<input type="hidden" name="business" value="' .
+				htmlspecialchars($configuration->getAsString('email')) . '" />' .
+			'<input type="hidden" name="lc" value="' .
+				htmlspecialchars($configuration->getAsString('locale')) . '" />' .
+			'<input type="hidden" name="item_name" value="' .
+				htmlspecialchars($registration->getEvent()->getTitle()) . ' (' .
+				$registration->getSeats() . ')" />' .
+			'<input type="hidden" name="item_number" value="' . $registration->getUid() . '" />' .
+			'<input type="hidden" name="amount" value="' . $registration->getTotalPrice(). '" />' .
+			'<input type="hidden" name="currency_code" value="' .
+				htmlspecialchars($configuration->getAsString('currency')) . '" />' .
+			'<input type="hidden" name="button_subtype" value="products" />' .
+			'<input type="hidden" name="no_note" value="0" />' .
+			'<input type="hidden" name="add" value="1" />' .
+			'<input type="hidden" name="bn" value="PP-ShopCartBF:btn_cart_LG.gif:NonHostedGuest" />' .
+			'<input type="image" src="https://www.paypal.com/en_GB/i/btn/btn_cart_LG.gif" ' .
+				'name="submit" alt="PayPal - The safer, easier way to pay online." />' .
+			'<img alt="" src="https://www.paypal.com/en_GB/i/scr/pixel.gif" width="1" height="1" />' .
+			'</div>' .
+			'</form>'
+				;
+
+		$template->setMarker('total_price', $newContent);
 	}
 }
 
