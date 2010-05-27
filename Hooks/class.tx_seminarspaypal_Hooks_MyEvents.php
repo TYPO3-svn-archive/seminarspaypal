@@ -36,7 +36,19 @@ require_once(t3lib_extMgm::extPath('oelib') . 'class.tx_oelib_Autoloader.php');
  * @author Oliver Klee <typo3-coding@oliverklee.de>
  */
 class tx_seminarspaypal_Hooks_MyEvents {
-
+	/**
+	 * Adds an "add to cart" PayPal button for non-free registrations that have
+	 * not been paid for.
+	 *
+	 * @param tx_seminars_Model_Registration $registration
+	 *        the affected registration
+	 * @param tx_oelib_Template $template
+	 *        the template from which the list row is built
+	 */
+	public function modifyMyEventsListRow(
+		tx_seminars_Model_Registration $registration, tx_oelib_Template $template
+	) {
+	}
 }
 
 if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/seminarspaypal/Hooks/class.tx_seminarspaypal_Hooks_MyEvents.php']) {
