@@ -3,7 +3,7 @@
 ########################################################################
 # Extension Manager/Repository config file for ext "seminarspaypal".
 #
-# Auto generated 27-05-2010 13:34
+# Auto generated 27-05-2010 13:54
 #
 # Manual updates:
 # Only the data in the array - everything else is removed by next
@@ -17,7 +17,7 @@ $EM_CONF[$_EXTKEY] = array(
 	'author' => 'Oliver Klee',
 	'author_email' => 'typo3-coding@oliverklee.de',
 	'shy' => '',
-	'dependencies' => 'seminars',
+	'dependencies' => 'oelib,seminars',
 	'conflicts' => '',
 	'priority' => '',
 	'module' => '',
@@ -29,17 +29,22 @@ $EM_CONF[$_EXTKEY] = array(
 	'clearCacheOnLoad' => 0,
 	'lockType' => '',
 	'author_company' => 'oliverklee.de',
-	'version' => '0.0.0',
+	'version' => '0.1.0',
 	'constraints' => array(
 		'depends' => array(
-			'seminars' => '',
+			'php' => '5.2.0-0.0.0',
+			'typo3' => '4.3.0-0.0.0',
+			'oelib' => '0.7.0-',
+			'seminars' => '0.9.0-',
 		),
 		'conflicts' => array(
 		),
 		'suggests' => array(
 		),
 	),
-	'_md5_values_when_last_written' => 'a:7:{s:9:"ChangeLog";s:4:"442b";s:12:"ext_icon.gif";s:4:"1bdc";s:14:"ext_tables.php";s:4:"e215";s:19:"doc/wizard_form.dat";s:4:"766f";s:20:"doc/wizard_form.html";s:4:"2085";s:48:"static/paypal_seminars_integration/constants.txt";s:4:"d41d";s:44:"static/paypal_seminars_integration/setup.txt";s:4:"284d";}',
+	'_md5_values_when_last_written' => 'a:9:{s:9:"ChangeLog";s:4:"442b";s:16:"ext_autoload.php";s:4:"84d6";s:12:"ext_icon.gif";s:4:"1bdc";s:17:"ext_localconf.php";s:4:"5195";s:14:"ext_tables.php";s:4:"1dbf";s:38:"Configuration/TypoScript/constants.txt";s:4:"d41d";s:34:"Configuration/TypoScript/setup.txt";s:4:"284d";s:48:"Hooks/class.tx_seminarspaypal_Hooks_MyEvents.php";s:4:"6703";s:28:"Tests/Hooks/MyEventsTest.php";s:4:"aedb";}',
+	'suggests' => array(
+	),
 );
 
 ?>
